@@ -1,0 +1,16 @@
+model:
+  type: "yolov8"  # yolov8 或 "yolov7_trt"
+  path: "./models/midu_fu_best.pt"
+  
+processing:
+  output_folder: "./output/test"
+  frame_interval: 2
+  is_gray: false
+  target_classes: [1,2,3,4,5]
+  mode: "filter"
+  batch_size: 32
+  num_workers: 16
+  
+logging:
+  level: "INFO"
+  file: "processor.log" 

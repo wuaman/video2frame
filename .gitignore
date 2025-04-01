@@ -1,0 +1,6 @@
+/models
+/output
+/V8save_crop_image-bak.py
+/data
+**/__pycache__
+.cursorignore
