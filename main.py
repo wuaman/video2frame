@@ -7,6 +7,7 @@ from yolo_processor.core.detectors.yolov8_detector import YOLOv8Detector
 from yolo_processor.core.detectors.yolov7_onnx_detector import YOLOv7ONNXDetector
 from yolo_processor.core.detectors.yolov7_trt_detector import YOLOv7TRTDetector
 from yolo_processor.core.processors.base_processor import BaseProcessor, ProcessMode
+import frame_extractor
 
 def load_config(config_path: str) -> Dict[str, Any]:
     """加载配置文件
@@ -87,15 +88,17 @@ def parse_args():
                       help='配置文件路径')
     parser.add_argument('--input', type=str, required=False, default= 'data/midu-dushu-yichang.mp4',
                       help='输入路径(图片/视频文件、文件夹或txt文件)')
-    parser.add_argument('--process-mode', type=str, choices=['crop', 'filter'],
+    parser.add_argument('--process-mode', type=str, choices=['crop', 'filter', 'extract_frames'],
                       default='crop',
-                      help='处理模式：crop(裁切)或filter(过滤)，覆盖配置文件设置')
+                      help='处理模式：crop(裁切)、filter(过滤)或extract_frames(抽帧)，覆盖配置文件设置')
     parser.add_argument('--classes', type=int, nargs='+',
                       help='指定要检测的类别ID列表')
     parser.add_argument('--batch-size', type=int,
                       help='批处理大小，默认从配置文件读取')
     parser.add_argument('--num-workers', type=int,
                       help='数据加载线程数，默认从配置文件读取')
+    parser.add_argument('--frame-interval', type=int,
+                      help='抽帧间隔，默认从配置文件读取')
     return parser.parse_args()
 
 def update_config_with_args(config: dict, args: argparse.Namespace) -> dict:
@@ -108,6 +111,8 @@ def update_config_with_args(config: dict, args: argparse.Namespace) -> dict:
         config['processing']['batch_size'] = args.batch_size
     if args.num_workers is not None:
         config['processing']['num_workers'] = args.num_workers
+    if args.frame_interval is not None:
+        config['processing']['frame_interval'] = args.frame_interval
     return config
 
 def main():
@@ -118,6 +123,20 @@ def main():
     # 加载配置并用命令行参数更新
     config = load_config(args.config)
     config = update_config_with_args(config, args)
+    
+    # 获取输入类型
+    input_mode = get_input_mode(args.input)
+    
+    # 抽帧模式
+    if config['processing']['mode'] == 'extract_frames':
+        output_folder = config['processing']['output_folder']
+        frame_interval = config['processing']['frame_interval']
+        num_workers = config['processing']['num_workers']
+        
+        # 调用抽帧模块处理
+        frame_extractor.main(args.input, output_folder, frame_interval, num_workers)
+        print(f"抽帧处理完成: {args.input}")
+        return
     
     # 创建检测器
     detector = get_detector(
@@ -132,9 +151,6 @@ def main():
         batch_size=config['processing']['batch_size'],
         num_workers=config['processing']['num_workers']
     )
-    
-    # 获取输入类型
-    input_mode = get_input_mode(args.input)
     
     # 准备处理参数
     process_params = {

@@ -12,6 +12,7 @@
 - **处理模式**：
   - 裁剪模式：自动裁剪并保存检测到的目标
   - 过滤模式：根据自定义规则过滤图像
+  - 抽帧模式：从视频中按指定间隔提取帧
 
 - **批量处理**：
   - 支持批量处理图像和视频
@@ -49,10 +50,11 @@ python main.py --config configs/default.yaml --input data/example.mp4
 
 - `--config`: 配置文件路径
 - `--input`: 输入路径（图片、视频、文件夹或文本文件）
-- `--process-mode`: 处理模式（crop或filter）
+- `--process-mode`: 处理模式（crop、filter 或 extract_frames）
 - `--classes`: 指定要检测的类别ID
 - `--batch-size`: 批处理大小
-- `--num-workers`: 数据加载线程数
+- `--num-workers`: 数据加载线程数/多进程抽帧
+- `--frame-interval`: 抽帧间隔
 
 ### 配置文件示例
 
@@ -93,6 +95,26 @@ python main.py --config configs/default.yaml --input data/images --process-mode 
 python main.py --config configs/default.yaml --input data/images --process-mode filter
 ```
 
+### 抽帧模式
+
+抽帧模式从视频中按指定间隔提取帧：
+
+```bash
+python main.py --config configs/default.yaml --input data/video.mp4 --process-mode extract_frames --frame-interval 10
+```
+
+也可以处理包含多个视频路径的文本文件：
+
+```bash
+python main.py --config configs/default.yaml --input data/videos.txt --process-mode extract_frames --num-workers 4
+```
+
+此外，抽帧功能也可以作为独立工具使用：
+
+```bash
+python frame_extractor.py --input data/video.mp4 --output output/frames --interval 10 --workers 1
+```
+
 ## 自定义过滤规则
 
 可以在代码中自定义过滤规则，例如：
@@ -126,6 +148,7 @@ yolo_processor/
 ├── configs/
 │   └── default.yaml
 ├── main.py
+├── frame_extractor.py
 └── requirements.txt
 ```
 
@@ -162,6 +185,7 @@ python main.py --config configs/default.yaml --input data/file_list.txt
 - 增加批处理大小可以提高GPU利用率
 - 调整工作线程数可以优化CPU利用率
 - 使用TensorRT模型可以获得最佳推理性能
+- 对于抽帧处理多个视频时，增加 `num-workers` 参数可以并行处理多个视频
 
 ## 许可证
 
