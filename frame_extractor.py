@@ -114,11 +114,31 @@ def process_videos(video_paths: List[str], output_folder: str, frame_interval: i
     
     return processed_count
 
+def get_video_files_from_directory(directory: str) -> List[str]:
+    """获取目录下所有视频文件的路径
+    
+    Args:
+        directory: 目录路径
+        
+    Returns:
+        List[str]: 视频文件路径列表
+    """
+    video_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.wmv', '.flv']
+    video_files = []
+    
+    for root, _, files in os.walk(directory):
+        for file in files:
+            ext = os.path.splitext(file)[1].lower()
+            if ext in video_extensions:
+                video_files.append(os.path.join(root, file))
+    
+    return video_files
+
 def main(input_path: str, output_folder: str, frame_interval: int, num_workers: int = 1):
     """抽帧主函数
     
     Args:
-        input_path: 输入路径(视频文件或txt文件)
+        input_path: 输入路径(视频文件、txt文件或目录)
         output_folder: 输出文件夹
         frame_interval: 帧间隔
         num_workers: 处理线程数
@@ -139,7 +159,7 @@ def main(input_path: str, output_folder: str, frame_interval: int, num_workers: 
         ext = os.path.splitext(input_path)[1].lower()
         
         # 视频文件
-        if ext in ['.mp4', '.avi', '.mov']:
+        if ext in ['.mp4', '.avi', '.mov', '.mkv', '.wmv', '.flv']:
             extract_frames_from_video(input_path, output_folder, frame_interval)
             return True
         # txt文件(包含视频路径列表)
@@ -149,6 +169,16 @@ def main(input_path: str, output_folder: str, frame_interval: int, num_workers: 
         else:
             print(f"不支持的文件类型: {ext}")
             return False
+    # 处理目录
+    elif os.path.isdir(input_path):
+        video_files = get_video_files_from_directory(input_path)
+        if not video_files:
+            print(f"目录中没有找到视频文件: {input_path}")
+            return False
+        
+        print(f"在目录 {input_path} 中找到 {len(video_files)} 个视频文件")
+        process_videos(video_files, output_folder, frame_interval, num_workers)
+        return True
     else:
         print(f"不支持的输入类型: {input_path}")
         return False
